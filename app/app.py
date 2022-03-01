@@ -1,10 +1,13 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, json
 import torch
 from PIL import Image
 from torchvision import transforms
 from core.tokenizers import Tokenizer
 from core.r2gen import R2GenModel
 from torchinfo import summary
+from PIL import Image
+import base64
+from io import BytesIO
 
 app = Flask(__name__)
 device = "cpu"
@@ -38,11 +41,13 @@ class Struct:
 args = Struct(**args)
 model = None
 
-@app.route('/predict',methods=['GET'])
+@app.route('/predict',methods=['POST'])
 def predict():
     if(model == None):
         initialize_model()
-    image = load_image()
+    data = request.data
+    data = json.loads(data)
+    image = load_image(data['image'])
     output = model(image, mode='sample')
     reports = model.tokenizer.decode_batch(output.cpu().numpy())
     return jsonify({'results':reports})
@@ -61,14 +66,15 @@ def _resume_checkpoint(model):
     print("Loading checkpoint: {} ...".format(resume_path))
     checkpoint = torch.load(resume_path,map_location=torch.device(device))
     # summary(model, input_size=(1,3, 224, 224))
-    print("\n\n")
     a = model.load_state_dict(checkpoint['state_dict'],strict=False)
     print(a)
     model.eval()
     return model
 
-def load_image():
-    image_uri = "./data/1.png"
-    image = Image.open(image_uri).convert('RGB')
+def load_image(image):
+    # image_uri = "./data/1.png"
+    # image = Image.open(image_uri).convert('RGB')
+    image = Image.open(BytesIO(base64.b64decode(image)))
+    # image.save("re.jpg",format="jpeg")
     image = transform(image).unsqueeze(0)
     return image
