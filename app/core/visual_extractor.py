@@ -3,7 +3,6 @@ import torch.nn as nn
 import torchvision.models as models
 from .chexnet import DenseNet121
 import os
-from torchinfo import summary
 
 visual_extractor = "chexnet"
 chexnet_checkpoint = ""

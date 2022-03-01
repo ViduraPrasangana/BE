@@ -4,7 +4,6 @@ from PIL import Image
 from torchvision import transforms
 from core.tokenizers import Tokenizer
 from core.r2gen import R2GenModel
-from torchinfo import summary
 from PIL import Image
 import base64
 from io import BytesIO
