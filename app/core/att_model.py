@@ -7,8 +7,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.nn.utils.rnn import PackedSequence, pack_padded_sequence, pad_packed_sequence
 
-import utils as utils
-from caption_model import CaptionModel
+import core.utils as utils
+from core.caption_model import CaptionModel
 
 
 def sort_pack_padded_sequence(input, lengths):
@@ -117,7 +117,7 @@ class AttModel(CaptionModel):
         it = fc_feats.new_full([batch_size], self.bos_idx, dtype=torch.long)
         logprobs, state = self.get_logprobs_state(it, p_fc_feats, p_att_feats, pp_att_feats, p_att_masks, state)
 
-        p_fc_feats, p_att_feats, pp_att_feats, p_att_masks = utils.repeat_tensors(beam_size,
+        p_fc_feats, p_att_feats, pp_att_feats, p_att_masks = repeat_tensors(beam_size,
                                                                                   [p_fc_feats, p_att_feats,
                                                                                    pp_att_feats, p_att_masks]
                                                                                   )
@@ -156,7 +156,7 @@ class AttModel(CaptionModel):
         p_fc_feats, p_att_feats, pp_att_feats, p_att_masks = self._prepare_feature(fc_feats, att_feats, att_masks)
 
         if sample_n > 1:
-            p_fc_feats, p_att_feats, pp_att_feats, p_att_masks = utils.repeat_tensors(sample_n,
+            p_fc_feats, p_att_feats, pp_att_feats, p_att_masks = repeat_tensors(sample_n,
                                                                                       [p_fc_feats, p_att_feats,
                                                                                        pp_att_feats, p_att_masks]
                                                                                       )

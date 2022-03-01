@@ -2,7 +2,7 @@ import json
 import re
 from collections import Counter
 
-ann_path = "../data/annotation.json"
+ann_path = "./data/annotation.json"
 threshold = 3
 dataset_name = 'iu_xray'
 

@@ -4,6 +4,8 @@ from PIL import Image
 from torchvision import transforms
 from core.tokenizers import Tokenizer
 from core.r2gen import R2GenModel
+from torchinfo import summary
+
 app = Flask(__name__)
 device = "cpu"
 transform = transforms.Compose([
@@ -11,29 +13,62 @@ transform = transforms.Compose([
                 transforms.ToTensor(),
                 transforms.Normalize((0.485, 0.456, 0.406),
                                      (0.229, 0.224, 0.225))])
-@app.route('/predict',methods=['POST'])
+
+args = {
+    "num_layers" : 3,
+    "d_model" : 512,
+    "d_ff" : 512,
+    "num_heads" : 8,
+    'dropout' : 0.1,
+    "rm_num_slots" : 3,
+    "rm_num_heads" : 8,
+    "rm_d_model" : 512,
+    "drop_prob_lm" : 0.5,
+    "max_seq_length" : 60,
+    "d_vf" : 1024,
+    "d_model" : 512,
+    "bos_idx" : 0,
+    "eos_idx" : 0,
+    "pad_idx" : 0,
+    "use_bn"  : 0
+}
+class Struct:
+    def __init__(self, **entries):
+        self.__dict__.update(entries)
+args = Struct(**args)
+model = None
+
+@app.route('/predict',methods=['GET'])
 def predict():
-    tokenizer = Tokenizer()
-    model = R2GenModel(tokenizer)
-    model = model.to(device)
-    _resume_checkpoint(model)
+    if(model == None):
+        initialize_model()
     image = load_image()
     output = model(image, mode='sample')
     reports = model.tokenizer.decode_batch(output.cpu().numpy())
     return jsonify({'results':reports})
 
-def _resume_checkpoint(self,model):
-    resume_path = ""
+def initialize_model():
+    global model
+    tokenizer = Tokenizer()
+    model = R2GenModel(args,tokenizer)
+    model = model.to(device)
+    model = _resume_checkpoint(model)
+    return model
+
+def _resume_checkpoint(model):
+    resume_path = "./models/base_chexnet.pth"
     resume_path = str(resume_path)
     print("Loading checkpoint: {} ...".format(resume_path))
-    checkpoint = torch.load(resume_path)
-    model.load_state_dict(checkpoint['state_dict'],maploca)
+    checkpoint = torch.load(resume_path,map_location=torch.device(device))
+    # summary(model, input_size=(1,3, 224, 224))
+    print("\n\n")
+    a = model.load_state_dict(checkpoint['state_dict'],strict=False)
+    print(a)
     model.eval()
-    print("Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch))
     return model
 
 def load_image():
     image_uri = "./data/1.png"
     image = Image.open(image_uri).convert('RGB')
-    image = transform(image).unqueeze(0)
+    image = transform(image).unsqueeze(0)
     return image

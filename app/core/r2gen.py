@@ -2,18 +2,18 @@ import torch
 import torch.nn as nn
 import numpy as np
 
-from visual_extractor import VisualExtractor
-from encoder_decoder import EncoderDecoder
+from .visual_extractor import VisualExtractor
+from .encoder_decoder import EncoderDecoder
 
 dataset_name = 'mimic'
 
 class R2GenModel(nn.Module):
-    def __init__(self, tokenizer):
+    def __init__(self,args, tokenizer):
         super(R2GenModel, self).__init__()
         self.dataset_name = dataset_name
         self.tokenizer = tokenizer
-        self.visual_extractor = VisualExtractor(args)
-        self.encoder_decoder = EncoderDecoder(args, tokenizer)
+        self.visual_extractor = VisualExtractor()
+        self.encoder_decoder = EncoderDecoder(args,tokenizer)
         if self.dataset_name == 'iu_xray':
             self.forward = self.forward_iu_xray
         else:
@@ -41,7 +41,7 @@ class R2GenModel(nn.Module):
             raise ValueError
         return output
 
-    def forward_mimic_cxr(self, images, targets=None, mode='train'):
+    def forward_mimic_cxr(self, images, targets=None, mode='sample'):
         att_feats, fc_feats = self.visual_extractor(images)
         if mode == 'train':
             output = self.encoder_decoder(fc_feats, att_feats, targets, mode='forward')

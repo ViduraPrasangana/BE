@@ -3,26 +3,30 @@ import torch.nn as nn
 import torchvision.models as models
 from .chexnet import DenseNet121
 import os
+from torchinfo import summary
 
+visual_extractor = "chexnet"
+chexnet_checkpoint = ""
+visual_extractor_pretrained = False
 
 class VisualExtractor(nn.Module):
-    def __init__(self, args):
+    def __init__(self):
         super(VisualExtractor, self).__init__()
-        self.visual_extractor = args.visual_extractor
-        self.pretrained = args.visual_extractor_pretrained
+        self.visual_extractor = visual_extractor
+        self.pretrained = visual_extractor_pretrained
         if(self.visual_extractor == "chexnet"):
             model = DenseNet121()
-            if os.path.isfile(args.chexnet_checkpoint):
+            if os.path.isfile(chexnet_checkpoint):
                 print("=> loading checkpoint")
-                checkpoint = torch.load(args.chexnet_checkpoint)
+                checkpoint = torch.load(chexnet_checkpoint)
                 state_dict = checkpoint['state_dict']
                 for key in list(state_dict.keys()):
                     state_dict[key[7:].replace('.1.', '1.'). replace('.2.', '2.')] = state_dict.pop(key)
                 model.load_state_dict(state_dict,strict=False)
-                model = model.get_model()
                 print("=> loaded checkpoint")
             else:
                 print("=> no checkpoint found")
+            model = model.get_model()
             modules = list(model.children())[:-1]
         else:
             model = getattr(models, self.visual_extractor)(pretrained=self.pretrained)
